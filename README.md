@@ -49,10 +49,100 @@ The system was validated using a watch window to confirm:
 - Synchronizing data with motion
 - Industrial reject system logic design
 
+                PARTS SORTING SYSTEM (PLC SIMULATION)
+
+   ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+   │  Photoeye    │     │  Vision      │     │ Shift Logic  │
+   │ (PE_Entry)   │────▶│ (Good/Bad)   │────▶│  (BSL)       │
+   └──────────────┘     └──────────────┘     └──────────────┘
+                                                       │
+                                                       ▼
+                                            ┌──────────────────┐
+                                            │ Tracking Registers│
+                                            │                  │
+                                            │ PartPresentTrack │
+                                            │ BadPartTrack     │
+                                            └──────────────────┘
+                                                       │
+                                                       ▼
+                                         ┌────────────────────────┐
+                                         │ Reject Decision Logic  │
+                                         │                        │
+                                         │ If Present AND Bad     │
+                                         │ → Trigger Reject Gate  │
+                                         └────────────────────────┘
+                                                       │
+                                                       ▼
+                                             ┌──────────────┐
+                                             │ Reject Gate  │
+                                             │ (Diverter)   │
+                                             └──────────────┘
+
+
+CONVEYOR TRACKING (BIT SHIFT REPRESENTATION)
+
+Position:   0   1   2   3   4   5   6   7   8   9
+Location:  Entry --------------------------- Reject
+
+Example: Bad Part Moving
+
+Step 0:
+Present:   1 0 0 0 0 0 0 0 0 0
+Bad:       1 0 0 0 0 0 0 0 0 0
+
+Step 1:
+Present:   0 1 0 0 0 0 0 0 0 0
+Bad:       0 1 0 0 0 0 0 0 0 0
+
+Step 2:
+Present:   0 0 1 0 0 0 0 0 0 0
+Bad:       0 0 1 0 0 0 0 0 0 0
+
+...
+
+Step 9 (Reject Position):
+Present:   0 0 0 0 0 0 0 0 0 1
+Bad:       0 0 0 0 0 0 0 0 0 1
+
+→ Reject Gate Fires
 ## Files Included
 - `.ACD` file (full project)
 - `.L5X` export (readable logic)
   
 
+
+LOGIC FLOW
+
+[Part Detected]
+        │
+        ▼
+[Classify Part]
+ (Good or Bad)
+        │
+        ▼
+[Load Bits into Registers]
+        │
+        ▼
+[Shift on Conveyor Pulse]
+        │
+        ▼
+[Reached Reject Position?]
+        │
+   ┌────┴────┐
+   ▼         ▼
+[Yes]       [No]
+   │         │
+   ▼         │
+[Bad Part?]  │
+   │         │
+ ┌─┴─┐       │
+ ▼   ▼       │
+Yes  No      │
+ │    │      │
+ ▼    ▼      │
+Reject Pass  │
+ │           │
+ ▼           ▼
+[Update Counters]
 ## Author
 Daryl Sanders
